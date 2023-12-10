@@ -1,0 +1,18 @@
+version: '3.8'
+
+services:
+  activeNowDB:
+    container_name: activeNowDB
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USERNAME}
+      MYSQL_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - "activeNowDB:/var/lib/mysql"
+    ports:
+      - ${DB_PORT}:3306
+volumes:
+  activeNowDB:
