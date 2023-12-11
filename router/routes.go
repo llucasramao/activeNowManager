@@ -6,8 +6,7 @@ import (
 )
 
 func InitializeRoutes(router *gin.Engine) {
-	v1 := router.Group("/api/v1")
-	{
-		v1.GET("/version", handlers.Version)
-	}
+	router.GET("/version", handlers.Version)
+	router.POST("/receiver", handlers.Receiver)
+	router.GET("/getCommands", handlers.Commander)
 }
