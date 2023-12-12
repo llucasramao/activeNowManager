@@ -1,31 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Active Now</title>
     <style>
+        /* Estilos Gerais */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        /* Estilo da Tabela */
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
         }
 
-        th, td {
+        th,
+        td {
             border: 1px solid #dddddd;
             text-align: left;
             padding: 8px;
         }
 
         th {
-            background-color: #f2f2f2;
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* Estilos do Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.4);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #888;
+            width: 80%;
+        }
+
+        .modal-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .modal-table th,
+        .modal-table td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        .modal-table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        /* Barra de pesquisa */
+        #appSearch {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        /* Estilos do Botão */
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Animação de Carregamento */
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 2s linear infinite;
+            display: none;
+            margin: auto;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Estilos para o cabeçalho e o botão de recarregar */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background-color: #f4f4f4;
+        }
+
+        .reload-button {
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 30px;
+            /* Tamanho aumentado do ícone */
+            color: #333333;
+            /* Cor do ícone */
+            display: flex;
+            align-items: center;
         }
     </style>
 </head>
+
 <body>
 
-    <h1>Active Now</h1>
+    <div class="header">
+        <h1>Active Now</h1>
+        <button class="reload-button" id="reloadButton" title="Recarregar Dados">
+            &#x21bb;
+        </button>
+    </div>
+
+    <div class="loader" id="loader"></div>
 
     <table id="dataTable">
         <thead>
@@ -37,6 +167,7 @@
                 <th>Ports</th>
                 <th>CreatedAt</th>
                 <th>UpdatedAt</th>
+                <th>Apps</th>
             </tr>
         </thead>
         <tbody>
@@ -44,23 +175,92 @@
         </tbody>
     </table>
 
+    <!-- Modal to display apps -->
+    <div id="appsModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Apps</h2>
+            <input type="text" id="appSearch" placeholder="Search apps...">
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Version</th>
+                    </tr>
+                </thead>
+                <tbody id="appsList">
+                    <!-- Apps will be listed here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
+        let currentApps = [];
+
         const formatDateTime = (dateTimeString) => {
-            const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', timeZoneName: 'short' };
+            const options = {
+                year: 'numeric',
+                month: 'numeric',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                second: 'numeric',
+                timeZoneName: 'short'
+            };
             return new Intl.DateTimeFormat('pt-BR', options).format(new Date(dateTimeString));
         };
 
         // Function to fetch data from the API
         const fetchData = async () => {
+            showLoader(true);
             try {
                 const response = await axios.get('http://localhost:7654/ViewReceiveds');
                 const data = response.data.content;
-
-                // Update the table with the new data
                 updateTable(data);
             } catch (error) {
                 console.error('Error fetching data:', error);
+            } finally {
+                showLoader(false);
+            }
+        };
+
+        // Function to show apps in a modal
+        const showApps = (apps) => {
+            currentApps = apps;
+            const modal = document.getElementById('appsModal');
+            const appsList = document.getElementById('appsList');
+            updateAppsTable(apps);
+            modal.style.display = 'block';
+        };
+
+        // Function to update apps table
+        const updateAppsTable = (apps) => {
+            const appsList = document.getElementById('appsList');
+            appsList.innerHTML = apps.map(app => `<tr><td>${app.Name}</td><td>${app.Version}</td></tr>`).join('');
+        };
+
+        // Filter apps based on search
+        document.getElementById('appSearch').addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredApps = currentApps.filter(app =>
+                app.Name.toLowerCase().includes(searchTerm) ||
+                app.Version.toLowerCase().includes(searchTerm)
+            );
+            updateAppsTable(filteredApps);
+        });
+
+        // Close modal when user clicks on <span> (x)
+        document.getElementsByClassName('close')[0].onclick = function () {
+            document.getElementById('appsModal').style.display = 'none';
+        };
+
+        // Close modal when user clicks anywhere outside of the modal
+        window.onclick = function (event) {
+            const modal = document.getElementById('appsModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
             }
         };
 
@@ -78,14 +278,31 @@
                 row.insertCell().textContent = item.Ports.map(port => port.Port).join(', ');
                 row.insertCell().textContent = formatDateTime(item.CreatedAt);
                 row.insertCell().textContent = formatDateTime(item.UpdatedAt);
+                const appsButtonCell = row.insertCell();
+                const appsButton = document.createElement('button');
+                appsButton.textContent = 'Apps';
+                appsButton.onclick = () => showApps(item.Apps);
+                appsButtonCell.appendChild(appsButton);
             });
+        };
+
+        // Function to show and hide loader
+        const showLoader = (show) => {
+            const loader = document.getElementById('loader');
+            loader.style.display = show ? 'block' : 'none';
         };
 
         // Initial data fetch
         fetchData();
 
-        // Set interval to fetch data every 10 seconds
-        setInterval(fetchData, 5000);
+        // Set interval to fetch data every 60 seconds
+        setInterval(fetchData, 60000);
+
+        // Evento de clique para o botão de recarregar
+        document.getElementById('reloadButton').addEventListener('click', function () {
+            fetchData();
+        });
     </script>
 </body>
+
 </html>
