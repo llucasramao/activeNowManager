@@ -5,7 +5,7 @@ echo "[+] Iniciando instalação do agente"
 mkdir -p /opt/activeNow
 rm -R /opt/activeNow/*
 
-curl -o /opt/activeNow/main http://192.168.1.31/main
+curl -o /opt/activeNow/main http://192.168.1.14:7654/linuxClientBin
 chmod +x /opt/activeNow/main
 
 echo "[Unit]

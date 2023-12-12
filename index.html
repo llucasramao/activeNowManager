@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Now</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            border: 1px solid #dddddd;
+            text-align: left;
+            padding: 8px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Active Now</h1>
+
+    <table id="dataTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>IP</th>
+                <th>Hostname</th>
+                <th>OS</th>
+                <th>Ports</th>
+                <th>CreatedAt</th>
+                <th>UpdatedAt</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Table content will be inserted here -->
+        </tbody>
+    </table>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        const formatDateTime = (dateTimeString) => {
+            const options = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric', timeZoneName: 'short' };
+            return new Intl.DateTimeFormat('pt-BR', options).format(new Date(dateTimeString));
+        };
+
+        // Function to fetch data from the API
+        const fetchData = async () => {
+            try {
+                const response = await axios.get('http://localhost:7654/ViewReceiveds');
+                const data = response.data.content;
+
+                // Update the table with the new data
+                updateTable(data);
+            } catch (error) {
+                console.error('Error fetching data:', error);
+            }
+        };
+
+        // Function to update the table with new data
+        const updateTable = (data) => {
+            const tableBody = document.querySelector('#dataTable tbody');
+            tableBody.innerHTML = '';
+
+            data.forEach(item => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = item.ID;
+                row.insertCell().textContent = item.Ip;
+                row.insertCell().textContent = item.Hostname;
+                row.insertCell().textContent = item.Os;
+                row.insertCell().textContent = item.Ports.map(port => port.Port).join(', ');
+                row.insertCell().textContent = formatDateTime(item.CreatedAt);
+                row.insertCell().textContent = formatDateTime(item.UpdatedAt);
+            });
+        };
+
+        // Initial data fetch
+        fetchData();
+
+        // Set interval to fetch data every 10 seconds
+        setInterval(fetchData, 5000);
+    </script>
+</body>
+</html>

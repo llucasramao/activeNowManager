@@ -7,6 +7,9 @@ import (
 
 func InitializeRoutes(router *gin.Engine) {
 	router.GET("/version", handlers.Version)
-	router.POST("/receiver", handlers.Receiver)
+	router.POST("/NewReceived", handlers.NewReceived)
 	router.GET("/getCommands", handlers.Commander)
+	router.GET("/ViewReceiveds", handlers.ViewReciveds)
+	router.GET("/linuxClient", handlers.InstallClientLinux)
+	router.GET("/linuxClientBin", handlers.InstallClientLinuxBIN)
 }
