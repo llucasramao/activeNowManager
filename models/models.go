@@ -15,11 +15,19 @@ type App struct {
 	Receiveds []Received `gorm:"many2many:reciber_apps;"`
 }
 
+type Service struct {
+	gorm.Model
+	Name     string
+	Received []Received `gorm:"many2many:reciber_services;"`
+}
+
 type Received struct {
 	gorm.Model
-	Ip       string
-	Hostname string
-	Os       string
-	Ports    []Port `gorm:"many2many:reciber_ports;"`
-	Apps     []App  `gorm:"many2many:reciber_apps;"`
+	Ip           string
+	Hostname     string
+	Os           string
+	Ports        []Port    `gorm:"many2many:reciber_ports;"`
+	Apps         []App     `gorm:"many2many:reciber_apps;"`
+	Services     []Service `gorm:"many2many:reciber_services;"`
+	AgentVersion string
 }

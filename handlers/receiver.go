@@ -25,6 +25,14 @@ func findOrCreateApp(db *gorm.DB, appName, appVersion string) (*models.App, erro
 	return &app, nil
 }
 
+func findOrCreateService(db *gorm.DB, serviceName string) (*models.Service, error) {
+	var service models.Service
+	if err := db.Where("name = ?", serviceName).FirstOrCreate(&service, models.Service{Name: serviceName}).Error; err != nil {
+		return nil, err
+	}
+	return &service, nil
+}
+
 func NewReceived(c *gin.Context) {
 	var receivedData models.Received
 	if err := c.ShouldBindJSON(&receivedData); err != nil {
@@ -42,6 +50,7 @@ func NewReceived(c *gin.Context) {
 	// Atualizando hostname e OS
 	received.Hostname = receivedData.Hostname
 	received.Os = receivedData.Os
+	received.AgentVersion = receivedData.AgentVersion
 
 	// Associando Portas e Apps
 	for _, portData := range receivedData.Ports {
@@ -60,6 +69,15 @@ func NewReceived(c *gin.Context) {
 			return
 		}
 		received.Apps = append(received.Apps, *app)
+	}
+
+	for _, serviceName := range receivedData.Services {
+		service, err := findOrCreateService(database.DB, serviceName.Name)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Erro ao encontrar/criar o Service"})
+			return
+		}
+		received.Services = append(received.Services, *service)
 	}
 
 	if err := database.DB.Save(&received).Error; err != nil {
@@ -119,7 +137,7 @@ func NewReceived(c *gin.Context) {
 
 func ViewReciveds(c *gin.Context) {
 	var recibers []models.Received
-	database.DB.Preload("Ports").Preload("Apps").Find(&recibers)
+	database.DB.Preload("Ports").Preload("Apps").Preload("Services").Find(&recibers)
 	c.JSON(200, gin.H{
 		"status":  "geted",
 		"content": recibers,

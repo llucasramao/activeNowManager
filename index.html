@@ -87,6 +87,14 @@
             border: 1px solid #ddd;
         }
 
+        #serviceSearch {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
         /* Estilos do Botão */
         button {
             background-color: #007bff;
@@ -147,7 +155,6 @@
 </head>
 
 <body>
-
     <div class="header">
         <h1>Active Now</h1>
         <button class="reload-button" id="reloadButton" title="Recarregar Dados">
@@ -165,11 +172,14 @@
                 <th>Hostname</th>
                 <th>OS</th>
                 <th>Ports</th>
+                <th>AgentVersion</th>
                 <th>CreatedAt</th>
                 <th>UpdatedAt</th>
                 <th>Apps</th>
+                <th>Services</th>
             </tr>
         </thead>
+
         <tbody>
             <!-- Table content will be inserted here -->
         </tbody>
@@ -194,6 +204,25 @@
             </table>
         </div>
     </div>
+
+    <div id="servicesModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Services</h2>
+            <input type="text" id="serviceSearch" placeholder="Search services...">
+            <table class="modal-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                    </tr>
+                </thead>
+                <tbody id="servicesList">
+                    <!-- Services will be listed here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script>
@@ -264,6 +293,44 @@
             }
         };
 
+        const showServices = (services) => {
+            currentServices = services;
+            const modal = document.getElementById('servicesModal');
+            const servicesList = document.getElementById('servicesList');
+            updateServicesTable(services);
+            modal.style.display = 'block';
+        };
+
+        const updateServicesTable = (services) => {
+            const servicesList = document.getElementById('servicesList');
+            servicesList.innerHTML = services.map(service => `<tr><td>${service.Name}</td></tr>`).join('');
+        };
+
+        document.getElementById('serviceSearch').addEventListener('input', function (e) {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredServices = currentServices.filter(service =>
+                service.Name.toLowerCase().includes(searchTerm)
+            );
+            updateServicesTable(filteredServices);
+        });
+
+        // Supondo que você tenha um elemento <span> com a classe 'close' no seu modal de serviços
+        document.querySelectorAll('.close')[1].onclick = function () {
+            document.getElementById('servicesModal').style.display = 'none';
+        };
+
+        window.onclick = function (event) {
+            const appsModal = document.getElementById('appsModal');
+            const servicesModal = document.getElementById('servicesModal');
+            if (event.target == appsModal) {
+                appsModal.style.display = 'none';
+            } else if (event.target == servicesModal) {
+                servicesModal.style.display = 'none';
+            }
+        };
+
+
+
         // Function to update the table with new data
         const updateTable = (data) => {
             const tableBody = document.querySelector('#dataTable tbody');
@@ -276,13 +343,21 @@
                 row.insertCell().textContent = item.Hostname;
                 row.insertCell().textContent = item.Os;
                 row.insertCell().textContent = item.Ports.map(port => port.Port).join(', ');
+                row.insertCell().textContent = item.AgentVersion;
                 row.insertCell().textContent = formatDateTime(item.CreatedAt);
                 row.insertCell().textContent = formatDateTime(item.UpdatedAt);
+
                 const appsButtonCell = row.insertCell();
                 const appsButton = document.createElement('button');
                 appsButton.textContent = 'Apps';
                 appsButton.onclick = () => showApps(item.Apps);
                 appsButtonCell.appendChild(appsButton);
+
+                const servicesButtonCell = row.insertCell();
+                const servicesButton = document.createElement('button');
+                servicesButton.textContent = 'Services';
+                servicesButton.onclick = () => showServices(item.Services);
+                servicesButtonCell.appendChild(servicesButton);
             });
         };
 
