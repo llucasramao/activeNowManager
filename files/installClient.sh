@@ -22,4 +22,5 @@ Restart=on-failure
 WantedBy=multi-user.target" > /etc/systemd/system/activeNow.service
 
 systemctl daemon-reload
+systemctl enable activeNow
 systemctl restart activeNow
